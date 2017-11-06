@@ -34,8 +34,7 @@ def generateNgrams(word):
     ngram = []
     for i in ngrams('   ' + word + '   ',3):
         ngram.append(''.join(i).strip())
-    return ngram[:3] + ngram[-3:]
-
+    return ngram[0], ngram[1], ngram[2], ngram[-1], ngram[-2], ngram[-3]
 def generateFeatures(words):
     features = []
     for i in words:
