@@ -1,12 +1,13 @@
 import os
 from collections import Counter
 import enchant
-from nltk.util import ngrams
+#from nltk.util import ngrams
 from sklearn import svm
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import linear_model
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import svm
 
 dataDir = '../data/'
@@ -31,15 +32,24 @@ def checkDict(word):
     return 0
 
 def generateNgrams(word):
-    ngram = []
-    for i in ngrams('   ' + word + '   ',3):
-        ngram.append(''.join(i).strip())
-    return ngram[0], ngram[1], ngram[2], ngram[-1], ngram[-2], ngram[-3]
+    #vec = CountVectorizer(analyzer='char',ngram_range=(1,5),token_pattern=r".+")
+    #out = vec.fit_transform([word])
+    #ngrams = vec.get_feature_names()
+    ngrams = []
+    word = '  '+word+'  '
+    for i in range(5):
+        ngrams.append(word[:i])
+        ngrams.append(word[-i:])
+    return ngrams
+
 def generateFeatures(words):
     features = []
     for i in words:
         temp = {}
-        temp['suf1'], temp['suf2'], temp['suf3'], temp['pre1'], temp['pre2'], temp['pre3'] = generateNgrams(i)
+        ngs = generateNgrams(i)
+        for ng in range(len(ngs)):
+            temp[ng] = ngs[ng]
+        temp['word'] = i
         temp['len'] = 1 if len(i) > 5 else 0
         temp['dict'] = checkDict(i)
         temp['capital'] = 0 if i[0] == i[0].lower() else 1
@@ -48,7 +58,7 @@ def generateFeatures(words):
 
 for i in os.listdir(dataDir):
     data.append(open(dataDir + i).read())
-
+    print('dsf')
 
 for i in data:
     for j in i.split('\n\n'):
@@ -57,20 +67,23 @@ for i in data:
             if len(temp)>1:
                 labels.append(temp[1])
                 if temp[1] == 'te':
-                    telWords[temp[1]] = temp[1]
+                    telWords[temp[0]] = temp[0]
                 words.append(temp[0])
 
+print(len(words))
 features = generateFeatures(words)
 
-X_train = generateFeatures(words[:9000])
-X_test = generateFeatures(words[9000:])
-Y_train = labels[:9000]
-Y_test = labels[9000:]
+X_train = generateFeatures(words[:23000])
+X_test = generateFeatures(words[23000:])
+Y_train = labels[:23000]
+Y_test = labels[23000:]
 
 clf = Pipeline([
 	('vectorizer', DictVectorizer(sparse=False)),
-	('classifier',linear_model.LogisticRegression())
+	('classifier', linear_model.LogisticRegression())
 	])
+
+
 clf.fit(X_train,Y_train)
 
 '''
